@@ -49,6 +49,7 @@ class QuestionScreen(Screen):
                 'correct': [0, 2]
             },
             # Text input
+
             {
                 'type': 'text',
                 'question': 'Как называется протокол для защищённой передачи данных по HTTP?',
