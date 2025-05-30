@@ -1,0 +1,115 @@
+<StartScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 15
+
+        Label:
+            text: 'Тест по киберзащите'
+            font_size: 24
+            bold: True
+            color: 0.1, 0.1, 0.2, 1
+
+        TextInput:
+            id: name_input
+            hint_text: 'Введите имя'
+            size_hint: 1, 0.2
+            multiline: False
+            on_text: root.check_input(*args)
+            background_color: 1, 1, 1, 1
+            foreground_color: 0.1, 0.1, 0.2, 1
+
+        Button:
+            id: btn
+            text: 'Начать тест'
+            size_hint: 0.5, 0.2
+            pos_hint: {'center_x': 0.5}
+            background_color: 0.2, 0.7, 0.6, 1
+            color: 1, 1, 1, 1
+            disabled: True
+            on_press: root.start_test()
+
+<QuestionScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 15
+
+        BoxLayout:
+            size_hint: 1, 0.1
+            Button:
+                id: prev_btn
+                text: '◀ Прошлый'
+                background_color: 0.8, 0.8, 0.9, 1
+                color: 0.1, 0.1, 0.2, 1
+                disabled: True
+                on_press: root.prev_question(*args)
+            Label:
+                id: question_counter
+                text: 'Вопрос 1 из 5'
+                color: 0.1, 0.1, 0.2, 1
+            Label:
+                id: score_label
+                text: 'Правильно: 0/0'
+                color: 0.1, 0.1, 0.2, 1
+            Button:
+                id: next_btn
+                text: 'Следующий ▶'
+                background_color: 0.8, 0.8, 0.9, 1
+                color: 0.1, 0.1, 0.2, 1
+                on_press: root.next_question(*args)
+
+        Label:
+            id: question_label
+            text_size: self.width, None
+            halign: 'center'
+            valign: 'middle'
+            color: 0.1, 0.1, 0.2, 1
+            font_size: 20
+            bold: True
+            size_hint: 1, 0.2
+
+        BoxLayout:
+            id: answers_container
+            orientation: 'vertical'
+            spacing: 10
+
+        Button:
+            id: finish_btn
+            text: 'Завершить тест'
+            size_hint: 0.6, 0.1
+            pos_hint: {'center_x': 0.5}
+            background_color: 0.9, 0.4, 0.4, 1
+            color: 1, 1, 1, 1
+            on_press: root.finish_test(*args)
+
+<ResultsScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 40
+        spacing: 25
+
+        Label:
+            id: result_label
+            font_size: 28
+            bold: True
+            color: 0.1, 0.1, 0.1, 1
+
+        Label:
+            id: percentage_label
+            font_size: 36
+            bold: True
+
+        Label:
+            text: ' Советы по кибербезопасности:\n• Используйте сложные пароли\n• Не открывайте подозрительные ссылки\n• Устанавливайте антивирус и обновляйте его\n• Работайте в защищённой Wi-Fi-сети'
+            font_size: 18
+            halign: 'center'
+            color: 0.2, 0.2, 0.2, 1
+
+        Button:
+            text: 'Пройти тест снова'
+            size_hint: 0.5, 0.15
+            pos_hint: {'center_x': 0.5}
+            background_color: 1, 0.84, 0, 1
+            color: 0, 0, 0, 1
+            on_press: root.restart_test()
