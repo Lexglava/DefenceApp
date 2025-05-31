@@ -1,115 +1,169 @@
+#:kivy 2.0.0
+#:import datetime datetime
+
+<YellowLabel@Label>:
+    color: 1, 0.85, 0, 1
+    bold: True
+    font_size: 18
+
+<YellowButton@Button>:
+    background_color: 1, 0.8, 0, 1
+    color: 0, 0, 0, 1
+    font_size: 16
+    background_normal: ''
+    background_down: ''
+    bold: True
+
 <StartScreen>:
     BoxLayout:
-        orientation: 'vertical'
+        orientation: "vertical"
         padding: 20
         spacing: 15
 
-        Label:
-            text: 'Тест по киберзащите'
+        YellowLabel:
+            text: "Добро пожаловать в DefenceApp"
             font_size: 24
-            bold: True
-            color: 0.1, 0.1, 0.2, 1
+            size_hint_y: None
+            height: 40
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
 
         TextInput:
             id: name_input
-            hint_text: 'Введите имя'
-            size_hint: 1, 0.2
+            hint_text: "Введите ФИО"
             multiline: False
-            on_text: root.check_input(*args)
-            background_color: 1, 1, 1, 1
-            foreground_color: 0.1, 0.1, 0.2, 1
+            on_text: root.check_input()
 
-        Button:
-            id: btn
-            text: 'Начать тест'
-            size_hint: 0.5, 0.2
-            pos_hint: {'center_x': 0.5}
-            background_color: 0.2, 0.7, 0.6, 1
-            color: 1, 1, 1, 1
+        TextInput:
+            id: group_input
+            hint_text: "Введите группу"
+            multiline: False
+
+        Label:
+            id: date_label
+            text: "Дата: "
+            size_hint_y: None
+            height: 30
+
+        YellowButton:
+            id: start_button
+            text: "Начать тест"
+            size_hint_y: None
+            height: 50
             disabled: True
-            on_press: root.start_test()
+            on_release: root.start_test()
 
-<QuestionScreen>:
+<TopicScreen>:
     BoxLayout:
-        orientation: 'vertical'
+        orientation: "vertical"
         padding: 20
         spacing: 15
 
-        BoxLayout:
-            size_hint: 1, 0.1
-            Button:
-                id: prev_btn
-                text: '◀ Прошлый'
-                background_color: 0.8, 0.8, 0.9, 1
-                color: 0.1, 0.1, 0.2, 1
-                disabled: True
-                on_press: root.prev_question(*args)
-            Label:
-                id: question_counter
-                text: 'Вопрос 1 из 5'
-                color: 0.1, 0.1, 0.2, 1
-            Label:
-                id: score_label
-                text: 'Правильно: 0/0'
-                color: 0.1, 0.1, 0.2, 1
-            Button:
-                id: next_btn
-                text: 'Следующий ▶'
-                background_color: 0.8, 0.8, 0.9, 1
-                color: 0.1, 0.1, 0.2, 1
-                on_press: root.next_question(*args)
+        YellowLabel:
+            text: "Выберите тему теста"
+            font_size: 24
+            size_hint_y: None
+            height: 40
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: 10
+
+            GridLayout:
+                id: topics_grid
+                cols: 1
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+
+<TestScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: 20
+        spacing: 15
 
         Label:
             id: question_label
-            text_size: self.width, None
-            halign: 'center'
-            valign: 'middle'
-            color: 0.1, 0.1, 0.2, 1
+            text: "Вопрос"
             font_size: 20
-            bold: True
-            size_hint: 1, 0.2
+            size_hint_y: None
+            height: 60
+            halign: "left"
+            valign: "middle"
+            text_size: self.size
+
+        ScrollView:
+            size_hint_y: 0.7
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: 10
+
+            BoxLayout:
+                id: answer_box
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+                padding: [0, 10, 0, 10]
 
         BoxLayout:
-            id: answers_container
-            orientation: 'vertical'
+            size_hint_y: None
+            height: 50
             spacing: 10
 
-        Button:
-            id: finish_btn
-            text: 'Завершить тест'
-            size_hint: 0.6, 0.1
-            pos_hint: {'center_x': 0.5}
-            background_color: 0.9, 0.4, 0.4, 1
-            color: 1, 1, 1, 1
-            on_press: root.finish_test(*args)
+            YellowButton:
+                text: "Назад"
+                on_release: root.previous_question()
 
-<ResultsScreen>:
+            YellowButton:
+                text: "Далее"
+                on_release: root.next_question()
+
+            YellowButton:
+                text: "Закончить"
+                on_release: root.finish_test()
+
+<ResultScreen>:
     BoxLayout:
-        orientation: 'vertical'
-        padding: 40
-        spacing: 25
+        orientation: "vertical"
+        padding: 30
+        spacing: 20
+
+        YellowLabel:
+            text: "Результаты теста"
+            font_size: 28
+            size_hint_y: None
+            height: 50
+
+        Label:
+            id: name_label
+            text: "ФИО: "
+            font_size: 20
+            size_hint_y: None
+            height: 30
+
+        Label:
+            id: group_label
+            text: "Группа: "
+            font_size: 20
+            size_hint_y: None
+            height: 30
 
         Label:
             id: result_label
-            font_size: 28
-            bold: True
-            color: 0.1, 0.1, 0.1, 1
+            text: "Правильных ответов: "
+            font_size: 20
+            size_hint_y: None
+            height: 30
 
-        Label:
-            id: percentage_label
-            font_size: 36
-            bold: True
-
-        Label:
-            text: ' Советы по кибербезопасности:\n• Используйте сложные пароли\n• Не открывайте подозрительные ссылки\n• Устанавливайте антивирус и обновляйте его\n• Работайте в защищённой Wi-Fi-сети'
-            font_size: 18
-            halign: 'center'
-            color: 0.2, 0.2, 0.2, 1
-
-        Button:
-            text: 'Пройти тест снова'
-            size_hint: 0.5, 0.15
-            pos_hint: {'center_x': 0.5}
-            background_color: 1, 0.84, 0, 1
-            color: 0, 0, 0, 1
-            on_press: root.restart_test()
+        YellowButton:
+            text: "Начать заново"
+            size_hint_y: None
+            height: 50
+            on_release:
+                app.root.current = "start"
