@@ -1,247 +1,242 @@
 from kivy.app import App
-from kivy.uix.button import Button
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.textinput import TextInput
-from kivy.core.window import Window
-from kivy.uix.label import Label
+from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.checkbox import CheckBox
-from kivy.config import Config
+from datetime import datetime
+from kivy.properties import StringProperty, ListProperty, NumericProperty
 
-Config.set('kivy','keyboard_mode','systemanddock')
-Config.set('graphics', 'resizable', True)
+# Явно загружаем main.kv
+Builder.load_file("main.kv")
+
 
 class StartScreen(Screen):
-    def check_input(self, instance, value):
-        self.ids.btn.disabled = len(value.strip()) == 0
+    def on_enter(self):
+        self.ids.start_button.disabled = True
+        self.ids.date_label.text = f"Дата: {datetime.now().strftime('%d.%m.%Y')}"
+
+    def check_input(self):
+        name = self.ids.name_input.text.strip()
+        self.ids.start_button.disabled = (len(name) == 0)
 
     def start_test(self):
-        self.manager.get_screen('test').reset_test()
-        self.manager.current = 'test'
+        app = App.get_running_app()
+        app.user_name = self.ids.name_input.text.strip()
+        app.group = self.ids.group_input.text.strip()
+        self.manager.current = "topic"
 
-class QuestionScreen(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.questions = [
-            # Single-choice
-            {
-                'type': 'single',
-                'question': 'Что такое межсетевой экран (firewall)?',
-                'answers': [
-                    'Аппаратное или программное решение, контролирующее сетевой трафик',
-                    'Антивирусный сканер',
-                    'Шифровальный протокол',
-                    'Сервис резервного копирования'
-                ],
-                'correct': 0
-            },
-            # Multiple-choice
-            {
-                'type': 'multiple',
-                'question': 'Какие из перечисленных мер помогают защитить компьютер от вредоносного ПО?',
-                'answers': [
-                    'Регулярное обновление ОС',
-                    'Скачивание программ с неизвестных сайтов',
-                    'Использование антивируса',
-                    'Отключение брандмауэра'
-                ],
-                'correct': [0, 2]
-            },
-            # Text input
-            {
-                'type': 'text',
-                'question': 'Как называется протокол для защищённой передачи данных по HTTP?',
-                'correct': 'HTTPS'
-            },
-            # True/False
-            {
-                'type': 'true_false',
-                'question': 'Использование сложных паролей снижает риск несанкционированного доступа.',
-                'correct': True
-            },
-            # Single-choice
-            {
-                'type': 'single',
-                'question': 'Какой метод защиты предотвращает физический доступ к внутренностям ПК?',
-                'answers': [
-                    'Шифрование данных',
-                    'Установка замка на корпус',
-                    'Брандмауэр',
-                    'Антивирус'
-                ],
-                'correct': 1
-            },
-        ]
-        self.total_questions = len(self.questions)
-        self.reset_test()
 
-    def reset_test(self):
-        self.current_question = 0
-        self.user_answers = [None] * self.total_questions
+class TopicScreen(Screen):
+    topics = ListProperty([
+        "Вредоносное ПО",
+        "Сетевая безопасность",
+        "Пароли и аутентификация",
+        "Итоговый тест"
+    ])
+
+    def on_enter(self):
+        grid = self.ids.topics_grid
+        grid.clear_widgets()
+        from kivy.uix.button import Button
+        for topic in self.topics:
+            btn = Button(text=topic, size_hint_y=None, height=50)
+            btn.bind(on_release=lambda instance, t=topic: self.select_topic(t))
+            grid.add_widget(btn)
+
+    def select_topic(self, topic):
+        app = App.get_running_app()
+        app.current_topic = topic
+        self.manager.get_screen("test").load_questions(topic)
+        self.manager.current = "test"
+
+
+class TestScreen(Screen):
+    questions = ListProperty([])
+    current_question_index = NumericProperty(0)
+    correct_answers = NumericProperty(0)
+    selected_answers = ListProperty([])
+
+    def load_questions(self, topic):
+        sample_questions = {
+            "Вредоносное ПО": [
+                {"question": "Что такое троян?", "type": "single",
+                 "options": ["Антивирус", "Вредоносная программа", "Брандмауэр", "Протокол"], "answer": 1},
+                {"question": "Какие типы вредоносного ПО существуют?", "type": "multiple",
+                 "options": ["Вирусы", "Шифровальщики", "Антивирусы", "Червяки"], "answer": [0, 1, 3]},
+                {"question": "Как называется ПО, которое собирает данные без согласия пользователя?", "type": "text", "answer": "Шпионское ПО"},
+                {"question": "Что из перечисленного помогает защититься от вирусов?", "type": "single",
+                 "options": ["Регулярное обновление ПО", "Использование пиратского ПО", "Отключение антивируса", "Открытие неизвестных ссылок"], "answer": 0},
+                {"question": "Какой тип вредоносного ПО шифрует файлы и требует выкуп?", "type": "single",
+                 "options": ["Червь", "Шпионское ПО", "Рансомварь", "Троян"], "answer": 2},
+            ],
+            "Сетевая безопасность": [
+                {"question": "Какой протокол обеспечивает шифрование данных в интернете?", "type": "single",
+                 "options": ["HTTP", "FTP", "HTTPS", "SMTP"], "answer": 2},
+                {"question": "Какие меры повышают сетевую безопасность?", "type": "multiple",
+                 "options": ["Использование VPN", "Открытые Wi-Fi сети", "Брандмауэр", "Отключение шифрования"], "answer": [0, 2]},
+                {"question": "Как называется атака, перехватывающая сетевой трафик?", "type": "text", "answer": "MITM"},
+                {"question": "Что защищает от несанкционированного доступа к сети?", "type": "single",
+                 "options": ["Антивирус", "Брандмауэр", "Шифровальщик", "Браузер"], "answer": 1},
+                {"question": "Какой порт обычно используется для HTTPS?", "type": "single",
+                 "options": ["80", "443", "21", "25"], "answer": 1},
+            ],
+            "Пароли и аутентификация": [
+                {"question": "Какой длины должен быть минимально безопасный пароль?", "type": "single",
+                 "options": ["4 символа", "8 символов", "12 символов", "16 символов"], "answer": 2},
+                {"question": "Какие элементы делают пароль более безопасным?", "type": "multiple",
+                 "options": ["Цифры", "Имя пользователя", "Символы", "Заглавные буквы"], "answer": [0, 2, 3]},
+                {"question": "Как называется метод аутентификации с использованием пароля и кода из приложения?", "type": "text", "answer": "Двухфакторная аутентификация"},
+                {"question": "Что из перечисленного является плохой практикой?", "type": "single",
+                 "options": ["Использование одинаковых паролей", "Двухфакторная аутентификация", "Регулярная смена паролей", "Использование менеджеров паролей"], "answer": 0},
+                {"question": "Какой метод защиты пароля использует хеширование?", "type": "single",
+                 "options": ["Шифрование", "Соление", "Кодирование", "Сжатие"], "answer": 1},
+            ],
+            "Итоговый тест": [
+                {"question": "Что из перечисленного является антивирусом?", "type": "single",
+                 "options": ["WannaCry", "Kaspersky", "NotPetya", "Trojan"], "answer": 1},
+                {"question": "Какие меры защищают от фишинга?", "type": "multiple",
+                 "options": ["Проверка URL", "Открытие всех писем", "Ан Lilllкаждое письмо", "Антивирус"], "answer": [0, 3]},
+                {"question": "Как называется атака, обманом заставляющая пользователя раскрыть данные?", "type": "text", "answer": "Фишинг"},
+                {"question": "Что из перечисленного защищает от вредоносного ПО?", "type": "single",
+                 "options": ["Регулярное обновление ПО", "Открытие неизвестных вложений", "Отключение брандмауэра", "Использование слабых паролей"], "answer": 0},
+                {"question": "Какой тип аутентификации наиболее безопасен?", "type": "single",
+                 "options": ["Пароль", "Биометрия", "Двухфакторная аутентификация", "PIN-код"], "answer": 2},
+            ]
+        }
+
+        self.questions = sample_questions.get(topic, [])
+        self.current_question_index = 0
         self.correct_answers = 0
-        self.answered_correctly = [False] * self.total_questions
-        self.update_question()
-        self.update_score()
+        self.selected_answers = []
+        self.show_question()
 
-    def clear_answers_container(self):
-        self.ids.answers_container.clear_widgets()
+    def show_question(self):
+        self.ids.answer_box.clear_widgets()
+        if not self.questions:
+            self.ids.question_label.text = "Вопросы не найдены."
+            return
 
-    def update_question(self):
-        q = self.questions[self.current_question]
-        self.ids.question_label.text = q['question']
-        self.ids.question_counter.text = f'Вопрос {self.current_question + 1} из {self.total_questions}'
-        self.ids.prev_btn.disabled = self.current_question == 0
-        self.ids.next_btn.disabled = self.current_question == self.total_questions - 1
+        q = self.questions[self.current_question_index]
+        self.ids.question_label.text = f"Вопрос {self.current_question_index + 1}: {q['question']}"
 
-        self.clear_answers_container()
+        if q["type"] == "single":
+            from kivy.uix.checkbox import CheckBox
+            from kivy.uix.boxlayout import BoxLayout
+            from kivy.uix.label import Label
 
-        if q['type'] == 'single':
-            self._build_single(q)
-        elif q['type'] == 'multiple':
-            self._build_multiple(q)
-        elif q['type'] == 'text':
-            self._build_text(q)
-        elif q['type'] == 'true_false':
-            self._build_tf(q)
+            self.selected_answers = [-1]
+            box = BoxLayout(orientation="vertical", spacing=10, size_hint_y=None)
+            box.bind(minimum_height=box.setter('height'))
+            for i, option in enumerate(q["options"]):
+                hl = BoxLayout(orientation="horizontal", size_hint_y=None, height=40)
+                cb = CheckBox(group="single", size_hint_x=0.2)
 
-    def _build_single(self, q):
-        self.answer_buttons = []
-        for idx, ans in enumerate(q['answers']):
-            btn = Button(text=ans, size_hint=(1, 0.15),
-                         background_color=(0.9, 0.9, 0.95, 1),
-                         color=(0.1, 0.1, 0.2, 1))
-            btn.bind(on_press=lambda inst, i=idx: self._on_single(i, q))
-            self.answer_buttons.append(btn)
-            self.ids.answers_container.add_widget(btn)
+                def on_cb_active(cb, value, idx=i):
+                    if value:
+                        self.selected_answers[0] = idx
 
-    def _on_single(self, idx, q):
-        self.user_answers[self.current_question] = idx
-        correct = idx == q['correct']
-        for i, btn in enumerate(self.answer_buttons):
-            if i == q['correct']:
-                btn.background_color = (0.2, 0.8, 0.4, 1)
-            elif i == idx:
-                btn.background_color = (0.9, 0.4, 0.4, 1)
-            else:
-                btn.background_color = (0.9, 0.9, 0.95, 1)
-        self._update_score(correct)
+                cb.bind(active=on_cb_active)
+                lbl = Label(text=option, halign="left", valign="middle", size_hint_x=0.8)
+                lbl.bind(size=lbl.setter('text_size'))
+                hl.add_widget(cb)
+                hl.add_widget(lbl)
+                box.add_widget(hl)
 
-    def _build_multiple(self, q):
-        self.checkboxes = []
-        for idx, ans in enumerate(q['answers']):
-            row = BoxLayout(orientation='horizontal', size_hint=(1, 0.15))
-            cb = CheckBox(size_hint=(0.2, 1))
-            lbl = Label(text=ans, size_hint=(0.8, 1), color=(0.1,0.1,0.2,1))
-            self.checkboxes.append(cb)
-            row.add_widget(cb)
-            row.add_widget(lbl)
-            self.ids.answers_container.add_widget(row)
+            self.ids.answer_box.add_widget(box)
 
-    def _save_multiple(self):
-        selected = [i for i, cb in enumerate(self.checkboxes) if cb.active]
-        self.user_answers[self.current_question] = selected
-        correct = set(selected) == set(self.questions[self.current_question]['correct'])
-        self._update_score(correct)
+        elif q["type"] == "multiple":
+            from kivy.uix.checkbox import CheckBox
+            from kivy.uix.boxlayout import BoxLayout
+            from kivy.uix.label import Label
 
-    def _build_text(self, q):
-        self.text_input = TextInput(
-            hint_text='Введите ответ',
-            size_hint=(1, 0.2),
-            multiline=False,
-            background_color=(1,1,1,1),
-            foreground_color=(0.1,0.1,0.2,1)
-        )
-        self.ids.answers_container.add_widget(self.text_input)
+            self.selected_answers = []
+            box = BoxLayout(orientation="vertical", spacing=10, size_hint_y=None)
+            box.bind(minimum_height=box.setter('height'))
+            for i, option in enumerate(q["options"]):
+                hl = BoxLayout(orientation="horizontal", size_hint_y=None, height=40)
+                cb = CheckBox(size_hint_x=0.2)
 
-    def _save_text(self):
-        ans = self.text_input.text.strip()
-        self.user_answers[self.current_question] = ans
-        correct = ans.lower() == self.questions[self.current_question]['correct'].lower()
-        self._update_score(correct)
+                def on_cb_active(cb, value, idx=i):
+                    if value:
+                        if idx not in self.selected_answers:
+                            self.selected_answers.append(idx)
+                    else:
+                        if idx in self.selected_answers:
+                            self.selected_answers.remove(idx)
 
-    def _build_tf(self, q):
-        self.tf_buttons = []
-        btn_t = ToggleButton(text='Верно', group='tf', size_hint=(1,0.15))
-        btn_f = ToggleButton(text='Неверно', group='tf', size_hint=(1,0.15))
-        self.tf_buttons = [btn_t, btn_f]
-        self.ids.answers_container.add_widget(btn_t)
-        self.ids.answers_container.add_widget(btn_f)
+                cb.bind(active=on_cb_active)
+                lbl = Label(text=option, halign="left", valign="middle", size_hint_x=0.8)
+                lbl.bind(size=lbl.setter('text_size'))
+                hl.add_widget(cb)
+                hl.add_widget(lbl)
+                box.add_widget(hl)
 
-    def _save_tf(self):
-        ans = (self.tf_buttons[0].state == 'down')
-        self.user_answers[self.current_question] = ans
-        correct = ans == self.questions[self.current_question]['correct']
-        self._update_score(correct)
+            self.ids.answer_box.add_widget(box)
 
-    def _update_score(self, is_correct):
-        if not self.answered_correctly[self.current_question] and is_correct:
-            self.correct_answers += 1
-            self.answered_correctly[self.current_question] = True
-        elif self.answered_correctly[self.current_question] and not is_correct:
-            self.correct_answers -= 1
-            self.answered_correctly[self.current_question] = False
-        self.update_score()
+        elif q["type"] == "text":
+            from kivy.uix.textinput import TextInput
 
-    def update_score(self):
-        self.ids.score_label.text = f'Правильно: {self.correct_answers}/{self.total_questions}'
+            self.selected_answers = [""]
+            ti = TextInput(multiline=False, size_hint_y=None, height=40)
 
-    def prev_question(self, *args):
-        if self.current_question > 0:
-            self._save_current()
-            self.current_question -= 1
-            self.update_question()
+            def on_text(instance, value):
+                self.selected_answers[0] = value.strip()
 
-    def next_question(self, *args):
-        if self.current_question < self.total_questions - 1:
-            self._save_current()
-            self.current_question += 1
-            self.update_question()
+            ti.bind(text=on_text)
+            self.ids.answer_box.add_widget(ti)
 
-    def _save_current(self):
-        qtype = self.questions[self.current_question]['type']
-        if qtype == 'multiple':
-            self._save_multiple()
-        elif qtype == 'text':
-            self._save_text()
-        elif qtype == 'true_false':
-            self._save_tf()
-
-    def finish_test(self, *args):
-        self._save_current()
-        perc = self.correct_answers / self.total_questions * 100
-        self.manager.get_screen('results').show_results(perc)
-        self.manager.current = 'results'
-
-class ResultsScreen(Screen):
-    def show_results(self, percentage):
-        self.ids.percentage_label.text = f'{percentage:.1f}%'
-
-        if percentage >= 80:
-            self.ids.result_label.text = 'Отличный результат!'
-            self.ids.result_label.color = (0.2, 0.2, 0.2, 1)
-            self.ids.percentage_label.color = (0.7, 0.6, 0, 1)
-        elif percentage >= 50:
-            self.ids.result_label.text = 'Хороший результат!'
-            self.ids.result_label.color = (0.2, 0.2, 0.2, 1)
-            self.ids.percentage_label.color = (0.9, 0.7, 0, 1)
+    def next_question(self):
+        self.check_answer()
+        if self.current_question_index < len(self.questions) - 1:
+            self.current_question_index += 1
+            self.show_question()
         else:
-            self.ids.result_label.text = 'Попробуйте ещё раз!'
-            self.ids.result_label.color = (0.2, 0.2, 0.2, 1)
-            self.ids.percentage_label.color = (0.8, 0.5, 0, 1)
+            self.manager.current = "result"
 
-    def restart_test(self):
-        self.manager.current = 'start'
+    def previous_question(self):
+        if self.current_question_index > 0:
+            self.current_question_index -= 1
+            self.show_question()
+
+    def check_answer(self):
+        q = self.questions[self.current_question_index]
+        ans = self.selected_answers
+        if q["type"] == "single":
+            if ans and ans[0] == q["answer"]:
+                self.correct_answers += 1
+        elif q["type"] == "multiple":
+            if sorted(ans) == sorted(q["answer"]):
+                self.correct_answers += 1
+        elif q["type"] == "text":
+            if ans and ans[0].lower() == q["answer"].lower():
+                self.correct_answers += 1
+
+    def finish_test(self):
+        self.check_answer()
+        self.manager.current = "result"
 
 
-class Main(App):
+class ResultScreen(Screen):
+    def on_enter(self):
+        app = App.get_running_app()
+        total = len(app.root.get_screen("test").questions)
+        correct = app.root.get_screen("test").correct_answers
+        self.ids.result_label.text = f"Правильных ответов: {correct} из {total}"
+        self.ids.name_label.text = f"ФИО: {app.user_name}"
+        self.ids.group_label.text = f"Группа: {app.group}"
+
+
+class DefenceApp(App):
+    user_name = StringProperty("")
+    group = StringProperty("")
+    current_topic = StringProperty("")
+
     def build(self):
-        Window.clearcolor = (0.95, 0.97, 1, 1)
         sm = ScreenManager()
-        sm.add_widget(StartScreen(name='start'))
-        sm.add_widget(QuestionScreen(name='test'))
-        sm.add_widget(ResultsScreen(name='results'))
+        sm.add_widget(StartScreen(name="start"))
+        sm.add_widget(TopicScreen(name="topic"))
+        sm.add_widget(TestScreen(name="test"))
+        sm.add_widget(ResultScreen(name="result"))
         return sm
 
-if __name__ == '__main__':
-    Main().run()
+
+if __name__ == "__main__":
+    DefenceApp().run()
