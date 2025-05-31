@@ -1,13 +1,13 @@
 [app]
 
 # (str) Title of your application
-title = Defence app
+title = Cyber Test
 
 # (str) Package name
-package.name = defence_app
+package.name = cyber_test
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.lex
+package.domain = org.loic
 
 # (str) Source code where the main.py live
 source.dir = .
